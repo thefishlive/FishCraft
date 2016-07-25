@@ -31,9 +31,9 @@ public class PlayerInteractionController : MonoBehaviour
         Debug.Assert(Camera != null, "Camera is null");
         Debug.Assert(HighlightTransform != null, "Highlight transform is null");
 
-        m_controls = new PlayerInteractionControls();
-
-	    SelectedBlock = BlockType.Grass;
+        m_controls = ControlsManager.GetActionSet<PlayerInteractionControls>();
+        
+        SelectedBlock = BlockType.Grass;
 	}
 	
 	// Update is called once per frame

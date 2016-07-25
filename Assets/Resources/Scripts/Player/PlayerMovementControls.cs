@@ -29,7 +29,7 @@ public class PlayerMovementControls : PlayerActionSet
         LookLeft = CreatePlayerAction("input.look.left");
         LookRight = CreatePlayerAction("input.look.right");
         Look = CreateTwoAxisPlayerAction(LookRight, LookLeft, LookUp, LookDown);
-
+        
         Jump = CreatePlayerAction("input.movement.jump");
 
         SetupKeyboardMappings();

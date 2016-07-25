@@ -29,7 +29,7 @@ public class PlayerMovementController : MonoBehaviour
     /// <summary>
     /// The action set for movement controls
     /// </summary>
-    private PlayerMovementControls m_movementControls;
+    private PlayerMovementControls m_controls;
     /// <summary>
     /// The players rigid body
     /// </summary>
@@ -41,7 +41,7 @@ public class PlayerMovementController : MonoBehaviour
     {
         Debug.Assert(Camera != null, "Camera is not all set");
 
-        m_movementControls = new PlayerMovementControls();
+        m_controls = ControlsManager.GetActionSet<PlayerMovementControls>();
         m_rigidbody = GetComponent<Rigidbody>();
 
         LockCursor();
@@ -70,15 +70,15 @@ public class PlayerMovementController : MonoBehaviour
     private void HandleMovement()
     {
         var movement = Vector3.zero;
-        movement += m_movementControls.Move.X * MovementSpeed.x * m_rigidbody.mass * transform.right;
-        movement += m_movementControls.Move.Y * MovementSpeed.y * m_rigidbody.mass * transform.forward;
+        movement += m_controls.Move.X * MovementSpeed.x * m_rigidbody.mass * transform.right;
+        movement += m_controls.Move.Y * MovementSpeed.y * m_rigidbody.mass * transform.forward;
 
         m_rigidbody.AddForce(movement, ForceMode.Impulse);
     }
 
     private void HandleJump()
     {
-        if (!m_movementControls.Jump.WasPressed) return;
+        if (!m_controls.Jump.WasPressed) return;
         if (!Physics.Raycast(transform.position, Vector3.down, 1.5f)) return;
 
         m_rigidbody.AddForce(Vector3.up * JumpHeight * m_rigidbody.mass, ForceMode.Impulse);
@@ -89,10 +89,10 @@ public class PlayerMovementController : MonoBehaviour
         if (Cursor.lockState != CursorLockMode.Locked)
             return;
 
-        transform.Rotate(Vector3.up, m_movementControls.Look.X * LookSensitivity.x);
+        transform.Rotate(Vector3.up, m_controls.Look.X * LookSensitivity.x);
 
         var vertAngle = Camera.transform.eulerAngles.x;
-        vertAngle += m_movementControls.Look.Y * LookSensitivity.y;
+        vertAngle += m_controls.Look.Y * LookSensitivity.y;
 
         if (vertAngle <= 180.0f && vertAngle > -LookMinY)
         {
