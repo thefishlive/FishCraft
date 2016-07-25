@@ -9,10 +9,8 @@ public class ControlsList : MonoBehaviour
 	// Use this for initialization
 	void Start ()
     {
-        Debug.Log(ControlsManager.GetActionSets());
         foreach (var actionSet in ControlsManager.GetActionSets())
 	    {
-            Debug.Log(actionSet);
 	        if (ListSubHeader != null)
 	        {
 	            var header = Instantiate(ListSubHeader);
