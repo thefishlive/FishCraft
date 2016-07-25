@@ -48,8 +48,14 @@ public class SurfaceWorldGenerator : WorldGenerator
 
     public override BlockType GetBlockType(BlockPos pos)
     {
-        // TODO make surface grass
-        return GetHeightAtLocation(pos.X, pos.Z) > pos.Y - SurfaceLevel ? BlockType.Dirt : BlockType.Air;
+        var height = GetHeightAtLocation(pos.X, pos.Z);
+
+        if (height < pos.Y - SurfaceLevel)
+        {
+            return BlockType.Air;
+        }
+
+        return height - 1 < pos.Y - SurfaceLevel ? BlockType.Grass : BlockType.Dirt;
     }
 
     private double GetHeightAtLocation(int x, int z)
