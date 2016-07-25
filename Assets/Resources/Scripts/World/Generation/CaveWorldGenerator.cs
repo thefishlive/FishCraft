@@ -52,7 +52,7 @@ public class CaveWorldGenerator : WorldGenerator
     public override BlockType GetBlockType(BlockPos pos)
     {
         if (pos.Y == 0)
-            return BlockType.Grass;
+            return BlockType.Bedrock;
 
         var noise = s_perlin.OctavePerlin(m_xSeed + (pos.X / XSize) * XScale, m_ySeed + (pos.Y / YSize) * YScale, m_zSeed + (pos.Z / ZSize) * ZScale, Octaves, Persistence);
         return noise > CaveThreshold ? (InvertGeneration ? BlockType.Air : BlockType.Stone) : (InvertGeneration ? BlockType.Stone : BlockType.Air);

@@ -21,13 +21,6 @@ public class Chunk : MonoBehaviour
         public int Z { get; set; }
     }
     
-    private struct Vertex
-    {
-        public Vector3 Pos { get; set; }
-        public Vector2 Uv { get; set; }
-        public Vector4 Tangent { get; set; }
-    }
-
     public World World { get; set; }
     public ChunkLocation Location { get; set; }
 
@@ -125,126 +118,129 @@ public class Chunk : MonoBehaviour
             {
                 for (var z = 0; z < (int)ChunkSize.z; z++)
                 {
-                    var blockType = m_blocks[x, y, z].Type;
+                    var block = m_blocks[x, y, z];
 
-                    if (blockType.Transparent)
+                    if (block.Type.Transparent)
                     {
                         continue;
                     }
 
-                    // Bottom Face
-                    if (!OptimiseMesh || (y == 0 && Location.Y == 0) || GetWorldBlock(new BlockPos(x, y - 1, z)).Type.Transparent)
-                    {
-                        verticies.AddRange(new[]
-                        {
-                            new Vertex { Pos = new Vector3(x, y, z), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Down] },
-                            new Vertex { Pos = new Vector3(x+1, y, z), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Down] + s_topRight },
-                            new Vertex { Pos = new Vector3(x+1, y, z+1), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Down] + s_bottomRight },
-                            new Vertex { Pos = new Vector3(x, y, z+1), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Down] + s_bottomLeft },
-                        });
+                    var model = block.GetModel();
+                    model.BuildMesh(World, this, new BlockPos(x, y, z), ref i, ref verticies, ref indicies);
 
-                        indicies.AddRange(new[]
-                        {
-                            0, 1, 2,
-                            0, 2, 3,
-                        }.Select(index => i + index));
-                        i += 4;
-                    }
-
-                    // Top Face
-                    if (!OptimiseMesh || (y == (int) ChunkSize.y - 1 && Location.Y == (int) World.Chunks.y - 1) || GetWorldBlock(new BlockPos(x, y + 1, z)).Type.Transparent)
-                    {
-                        verticies.AddRange(new[]
-                        {
-                            new Vertex { Pos = new Vector3(x, y+1, z), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Up] },
-                            new Vertex { Pos = new Vector3(x+1, y+1, z), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Up] + s_topRight },
-                            new Vertex { Pos = new Vector3(x+1, y+1, z+1), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Up] + s_bottomRight },
-                            new Vertex { Pos = new Vector3(x, y+1, z+1), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Up] + s_bottomLeft },
-                        });
-
-                        indicies.AddRange(new[]
-                        {
-                            0, 2, 1,
-                            0, 3, 2,
-                        }.Select(index => i + index));
-                        i += 4;
-                    }
-
-                    // Left Face
-                    if (!OptimiseMesh || (x == 0 && Location.X == 0) || GetWorldBlock(new BlockPos(x - 1, y, z)).Type.Transparent)
-                    {
-                        verticies.AddRange(new[]
-                        {
-                            new Vertex { Pos = new Vector3(x, y, z), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Left] + s_bottomLeft },
-                            new Vertex { Pos = new Vector3(x, y+1, z), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Left] + s_topRight },
-                            new Vertex { Pos = new Vector3(x, y, z+1), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Left] + s_bottomRight },
-                            new Vertex { Pos = new Vector3(x, y+1, z+1), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Left] + s_topLeft },
-                        });
-
-                        indicies.AddRange(new[]
-                        {
-                            0, 3, 1,
-                            0, 2, 3,
-                        }.Select(index => i + index));
-                        i += 4;
-                    }
-                    
-                    // Right Face
-                    if (!OptimiseMesh || (x == (int) ChunkSize.x - 1 && Location.X == (int)World.Chunks.x - 1) || GetWorldBlock(new BlockPos(x + 1, y, z)).Type.Transparent)
-                    {
-                        verticies.AddRange(new[]
-                        {
-                            new Vertex { Pos = new Vector3(x+1, y, z), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Right] + s_bottomRight },
-                            new Vertex { Pos = new Vector3(x+1, y+1, z), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Right] + s_topLeft },
-                            new Vertex { Pos = new Vector3(x+1, y, z+1), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Right] + s_bottomLeft },
-                            new Vertex { Pos = new Vector3(x+1, y+1, z+1), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Right] + s_topRight },
-                        });
-
-                        indicies.AddRange(new[]
-                        {
-                            0, 3, 2,
-                            0, 1, 3,
-                        }.Select(index => i + index));
-                        i += 4;
-                    }
-
-                    // Front Face
-                    if (!OptimiseMesh || (z == 0 && Location.Z == 0) || GetWorldBlock(new BlockPos(x, y, z - 1)).Type.Transparent)
-                    {
-                        verticies.AddRange(new[]
-                        {
-                            new Vertex { Pos = new Vector3(x, y, z), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Forward] + s_bottomLeft },
-                            new Vertex { Pos = new Vector3(x+1, y, z), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Forward] + s_bottomRight },
-                            new Vertex { Pos = new Vector3(x, y+1, z), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Forward] },
-                            new Vertex { Pos = new Vector3(x+1, y+1, z), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Forward] + s_topRight },
-                        });
-
-                        indicies.AddRange(new[]
-                        {
-                            0, 3, 1,
-                            0, 2, 3,
-                        }.Select(index => i + index));
-                        i += 4;
-                    }
-                    
-                    // Back Face
-                    if (!OptimiseMesh || (z == (int) ChunkSize.z - 1 && Location.Z == (int)World.Chunks.z - 1) || GetWorldBlock(new BlockPos(x, y, z + 1)).Type.Transparent)
-                    {
-                        verticies.AddRange(new[]
-                        {
-                            new Vertex { Pos = new Vector3(x, y, z+1), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Backwards] + s_bottomLeft },
-                            new Vertex { Pos = new Vector3(x+1, y, z+1), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Backwards] + s_bottomRight},
-                            new Vertex { Pos = new Vector3(x, y+1, z+1), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Backwards] },
-                            new Vertex { Pos = new Vector3(x+1, y+1, z+1), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Backwards] + s_topRight },
-                        });
-
-                        indicies.AddRange(new[]
-                        {
-                            1, 2, 0,
-                            1, 3, 2
-                        }.Select(index => i + index));
-                        i += 4;
-                    }
+//                    // Bottom Face
+//                    if (!OptimiseMesh || (y == 0 && Location.Y == 0) || GetWorldBlock(new BlockPos(x, y - 1, z)).Type.Transparent)
+//                    {
+//                        verticies.AddRange(new[]
+//                        {
+//                            new Vertex { Pos = new Vector3(x, y, z), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Down] },
+//                            new Vertex { Pos = new Vector3(x+1, y, z), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Down] + s_topRight },
+//                            new Vertex { Pos = new Vector3(x+1, y, z+1), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Down] + s_bottomRight },
+//                            new Vertex { Pos = new Vector3(x, y, z+1), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Down] + s_bottomLeft },
+//                        });
+//
+//                        indicies.AddRange(new[]
+//                        {
+//                            0, 1, 2,
+//                            0, 2, 3,
+//                        }.Select(index => i + index));
+//                        i += 4;
+//                    }
+//
+//                    // Top Face
+//                    if (!OptimiseMesh || (y == (int) ChunkSize.y - 1 && Location.Y == (int) World.Chunks.y - 1) || GetWorldBlock(new BlockPos(x, y + 1, z)).Type.Transparent)
+//                    {
+//                        verticies.AddRange(new[]
+//                        {
+//                            new Vertex { Pos = new Vector3(x, y+1, z), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Up] },
+//                            new Vertex { Pos = new Vector3(x+1, y+1, z), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Up] + s_topRight },
+//                            new Vertex { Pos = new Vector3(x+1, y+1, z+1), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Up] + s_bottomRight },
+//                            new Vertex { Pos = new Vector3(x, y+1, z+1), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Up] + s_bottomLeft },
+//                        });
+//
+//                        indicies.AddRange(new[]
+//                        {
+//                            0, 2, 1,
+//                            0, 3, 2,
+//                        }.Select(index => i + index));
+//                        i += 4;
+//                    }
+//
+//                    // Left Face
+//                    if (!OptimiseMesh || (x == 0 && Location.X == 0) || GetWorldBlock(new BlockPos(x - 1, y, z)).Type.Transparent)
+//                    {
+//                        verticies.AddRange(new[]
+//                        {
+//                            new Vertex { Pos = new Vector3(x, y, z), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Left] + s_bottomLeft },
+//                            new Vertex { Pos = new Vector3(x, y+1, z), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Left] + s_topRight },
+//                            new Vertex { Pos = new Vector3(x, y, z+1), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Left] + s_bottomRight },
+//                            new Vertex { Pos = new Vector3(x, y+1, z+1), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Left] + s_topLeft },
+//                        });
+//
+//                        indicies.AddRange(new[]
+//                        {
+//                            0, 3, 1,
+//                            0, 2, 3,
+//                        }.Select(index => i + index));
+//                        i += 4;
+//                    }
+//                    
+//                    // Right Face
+//                    if (!OptimiseMesh || (x == (int) ChunkSize.x - 1 && Location.X == (int)World.Chunks.x - 1) || GetWorldBlock(new BlockPos(x + 1, y, z)).Type.Transparent)
+//                    {
+//                        verticies.AddRange(new[]
+//                        {
+//                            new Vertex { Pos = new Vector3(x+1, y, z), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Right] + s_bottomRight },
+//                            new Vertex { Pos = new Vector3(x+1, y+1, z), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Right] + s_topLeft },
+//                            new Vertex { Pos = new Vector3(x+1, y, z+1), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Right] + s_bottomLeft },
+//                            new Vertex { Pos = new Vector3(x+1, y+1, z+1), Tangent = new Vector4(0f, 0f, 1f, -1f), Uv = blockType[Direction.Right] + s_topRight },
+//                        });
+//
+//                        indicies.AddRange(new[]
+//                        {
+//                            0, 3, 2,
+//                            0, 1, 3,
+//                        }.Select(index => i + index));
+//                        i += 4;
+//                    }
+//
+//                    // Front Face
+//                    if (!OptimiseMesh || (z == 0 && Location.Z == 0) || GetWorldBlock(new BlockPos(x, y, z - 1)).Type.Transparent)
+//                    {
+//                        verticies.AddRange(new[]
+//                        {
+//                            new Vertex { Pos = new Vector3(x, y, z), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Forward] + s_bottomLeft },
+//                            new Vertex { Pos = new Vector3(x+1, y, z), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Forward] + s_bottomRight },
+//                            new Vertex { Pos = new Vector3(x, y+1, z), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Forward] },
+//                            new Vertex { Pos = new Vector3(x+1, y+1, z), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Forward] + s_topRight },
+//                        });
+//
+//                        indicies.AddRange(new[]
+//                        {
+//                            0, 3, 1,
+//                            0, 2, 3,
+//                        }.Select(index => i + index));
+//                        i += 4;
+//                    }
+//                    
+//                    // Back Face
+//                    if (!OptimiseMesh || (z == (int) ChunkSize.z - 1 && Location.Z == (int)World.Chunks.z - 1) || GetWorldBlock(new BlockPos(x, y, z + 1)).Type.Transparent)
+//                    {
+//                        verticies.AddRange(new[]
+//                        {
+//                            new Vertex { Pos = new Vector3(x, y, z+1), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Backwards] + s_bottomLeft },
+//                            new Vertex { Pos = new Vector3(x+1, y, z+1), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Backwards] + s_bottomRight},
+//                            new Vertex { Pos = new Vector3(x, y+1, z+1), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Backwards] },
+//                            new Vertex { Pos = new Vector3(x+1, y+1, z+1), Tangent = new Vector4(0f, 1f, 0f, -1f), Uv = blockType[Direction.Backwards] + s_topRight },
+//                        });
+//
+//                        indicies.AddRange(new[]
+//                        {
+//                            1, 2, 0,
+//                            1, 3, 2
+//                        }.Select(index => i + index));
+//                        i += 4;
+//                    }
                 }
             }
         }
@@ -277,7 +273,7 @@ public class Chunk : MonoBehaviour
         m_meshCollider.sharedMesh = m_mesh;
     }
 
-    private BlockPos ToWorldPosition(BlockPos pos)
+    public BlockPos ToWorldPosition(BlockPos pos)
     {
         return new BlockPos(
             pos.X + (int) (Location.X * ChunkSize.x),
@@ -286,7 +282,7 @@ public class Chunk : MonoBehaviour
             );
     }
 
-    private BlockPos ToLocalPosition(BlockPos pos)
+    public BlockPos ToLocalPosition(BlockPos pos)
     {
         return new BlockPos(
             pos.X - (int)(Location.X * ChunkSize.x),
