@@ -11,7 +11,6 @@ public class ControlsManager
     {
         RegisterControls(typeof(PlayerMovementControls));
         RegisterControls(typeof(PlayerInteractionControls));
-        Debug.Log(s_actionSets.Count);
     }
     
     private ControlsManager() { }

@@ -18,6 +18,7 @@ public class Chunk : MonoBehaviour
     
     public World World { get; set; }
     public ChunkLocation Location { get; set; }
+    public bool Loaded { get; set; }
 
     [Header("World Generation")]
     [Tooltip("The world generator for this chunk")]
@@ -194,19 +195,19 @@ public class Chunk : MonoBehaviour
         var local = ToLocalPosition(pos);
         m_blocks[local.X, local.Y, local.Z] = block.CreateState();
 
-        if (local.X == 0 && Location.X != 0)
+        if (local.X == 0)
             World.GetChunk(pos + new BlockPos(-1, 0, 0)).MarkDirty();
-        else if (local.X == (int) ChunkSize.x - 1 && Location.X != (int) World.Chunks.x - 1)
+        else if (local.X == (int) ChunkSize.x - 1)
             World.GetChunk(pos + new BlockPos(1, 0, 0)).MarkDirty();
 
-        if (local.Y == 0 && Location.Y != 0)
+        if (local.Y == 0)
             World.GetChunk(pos + new BlockPos(0, -1, 0)).MarkDirty();
-        else if (local.Y == (int)ChunkSize.y - 1 && Location.Y != (int)World.Chunks.y - 1)
+        else if (local.Y == (int)ChunkSize.y - 1)
             World.GetChunk(pos + new BlockPos(0, 1, 0)).MarkDirty();
 
-        if (local.Z == 0 && Location.Z != 0)
+        if (local.Z == 0)
             World.GetChunk(pos + new BlockPos(0, 0, -1)).MarkDirty();
-        else if (local.Z == (int)ChunkSize.z - 1 && Location.Z != (int)World.Chunks.z - 1)
+        else if (local.Z == (int)ChunkSize.z - 1)
             World.GetChunk(pos + new BlockPos(0, 0, 1)).MarkDirty();
 
         MarkDirty();

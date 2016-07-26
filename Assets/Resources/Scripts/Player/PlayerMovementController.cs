@@ -1,5 +1,8 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
+[RequireComponent(typeof(ChunkLoader))]
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerMovementController : MonoBehaviour
 {
@@ -34,15 +37,34 @@ public class PlayerMovementController : MonoBehaviour
     /// The players rigid body
     /// </summary>
     private Rigidbody m_rigidbody;
-
-
+    /// <summary>
+    /// The chunk loader for this player
+    /// </summary>
+    private ChunkLoader m_chunkLoader;
+    /// <summary>
+    /// The world this player is in
+    /// </summary>
+    private World m_world;
+    
     // Use this for initialization
     private void Start()
     {
         Debug.Assert(Camera != null, "Camera is not all set");
 
         m_controls = ControlsManager.GetActionSet<PlayerMovementControls>();
+        m_chunkLoader = GetComponent<ChunkLoader>();
         m_rigidbody = GetComponent<Rigidbody>();
+
+        var worldObj = GameObject.FindWithTag("World");
+
+        if (worldObj == null)
+        {
+            Debug.LogError("Could not find world game object");
+            enabled = false;
+            return;
+        }
+
+        m_world = worldObj.GetComponent<World>();
 
         LockCursor();
     }
@@ -74,6 +96,18 @@ public class PlayerMovementController : MonoBehaviour
         movement += m_controls.Move.Y * MovementSpeed.y * m_rigidbody.mass * transform.forward;
 
         m_rigidbody.AddForce(movement, ForceMode.Impulse);
+
+//        UpdateLoadedChunks();
+    }
+
+    private void UpdateLoadedChunks()
+    {
+        var chunks = m_chunkLoader.GetLoadedChunks();
+
+        foreach (var chunk in chunks.Select(loc => m_world.GetChunk(loc)))
+        {
+            chunk.Loaded = true;
+        }
     }
 
     private void HandleJump()

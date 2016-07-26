@@ -18,10 +18,11 @@ public class BlockModel : Model
         var worldPos = chunk.ToWorldPosition(pos);
         var blockType = world.GetBlock(worldPos).Type;
         var i = id;
-
+        
+        var adj = !chunk.OptimiseMesh || worldPos.Y == 0 ? null : world.GetBlock(worldPos + new BlockPos(0, -1, 0));
 
         // Bottom Face
-        if (!chunk.OptimiseMesh || (pos.Y == 0 && chunk.Location.Y == 0) || world.GetBlock(worldPos + new BlockPos(0, -1, 0)).Type.Transparent)
+        if (adj == null || adj.Type.Transparent)
         {
             verticies.AddRange(new[]
             {
@@ -40,7 +41,9 @@ public class BlockModel : Model
         }
 
         // Top Face
-        if (!chunk.OptimiseMesh || (pos.Y == (int)world.ChunkSize.y - 1 && chunk.Location.Y == (int)world.Chunks.y - 1) || world.GetBlock(worldPos + new BlockPos(0, 1, 0)).Type.Transparent)
+        adj = !chunk.OptimiseMesh || worldPos.Y == 0 ? null : world.GetBlock(worldPos + new BlockPos(0, 1, 0));
+
+        if (adj == null || adj.Type.Transparent)
         {
             verticies.AddRange(new[]
             {
@@ -48,7 +51,7 @@ public class BlockModel : Model
                 new Vertex { Pos = new Vector3(pos.X+1, pos.Y+1, pos.Z), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Up] + s_topRight },
                 new Vertex { Pos = new Vector3(pos.X+1, pos.Y+1, pos.Z+1), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Up] + s_bottomRight },
                 new Vertex { Pos = new Vector3(pos.X, pos.Y+1, pos.Z+1), Tangent = new Vector4(1f, 0f, 0f, -1f), Uv = blockType[Direction.Up] + s_bottomLeft },
-                });
+            });
 
             indicies.AddRange(new[]
             {
@@ -58,8 +61,10 @@ public class BlockModel : Model
             i += 4;
         }
 
+        adj = !chunk.OptimiseMesh ? null : world.GetBlock(worldPos + new BlockPos(-1, 0, 0));
+
         // Left Face
-        if (!chunk.OptimiseMesh || (pos.X == 0 && chunk.Location.X == 0) || world.GetBlock(worldPos + new BlockPos(-1, 0, 0)).Type.Transparent)
+        if (adj == null || adj.Type.Transparent)
         {
             verticies.AddRange(new[]
             {
@@ -77,8 +82,10 @@ public class BlockModel : Model
             i += 4;
         }
 
+        adj = !chunk.OptimiseMesh ? null : world.GetBlock(worldPos + new BlockPos(1, 0, 0));
+
         // Right Face
-        if (!chunk.OptimiseMesh || (pos.X == (int)world.ChunkSize.x - 1 && chunk.Location.X == (int)world.Chunks.x - 1) || world.GetBlock(worldPos + new BlockPos(1, 0, 0)).Type.Transparent)
+        if (adj == null || adj.Type.Transparent)
         {
             verticies.AddRange(new[]
             {
@@ -96,8 +103,10 @@ public class BlockModel : Model
             i += 4;
         }
 
+        adj = !chunk.OptimiseMesh ? null : world.GetBlock(worldPos + new BlockPos(0, 0, -1));
+
         // Front Face
-        if (!chunk.OptimiseMesh || (pos.Z == 0 && chunk.Location.Z == 0) || world.GetBlock(worldPos + new BlockPos(0, 0, -1)).Type.Transparent)
+        if (adj == null || adj.Type.Transparent)
         {
             verticies.AddRange(new[]
             {
@@ -115,8 +124,10 @@ public class BlockModel : Model
             i += 4;
         }
 
+        adj = !chunk.OptimiseMesh ? null : world.GetBlock(worldPos + new BlockPos(0, 0, 1));
+
         // Back Face
-        if (!chunk.OptimiseMesh || (pos.Z == (int)world.ChunkSize.z - 1 && chunk.Location.Z == (int)world.Chunks.z - 1) || world.GetBlock(worldPos + new BlockPos(0, 0, 1)).Type.Transparent)
+        if (adj == null || adj.Type.Transparent)
         {
             verticies.AddRange(new[]
             {

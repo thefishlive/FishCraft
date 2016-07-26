@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -34,7 +36,7 @@ public class World : MonoBehaviour
     [Tooltip("Cull out invisible faces in the mesh")]
     public bool OptimiseMesh = true;
 
-    private Chunk[,,] m_chunks;
+    private Dictionary<Chunk.ChunkLocation,Chunk> m_chunks;
 
     private bool m_running;
 
@@ -54,54 +56,58 @@ public class World : MonoBehaviour
         var stopwatch = new Stopwatch();
         stopwatch.Start();
 #endif
-        m_chunks = new Chunk[(int)Chunks.x, (int)Chunks.y, (int)Chunks.z];
+        m_chunks = new Dictionary<Chunk.ChunkLocation, Chunk>();
+        yield return new WaitForFixedUpdate();
+
+        var spawnX = Mathf.FloorToInt(SpawnPosition.x * Chunks.x * ChunkSize.x + ChunkSize.x / 2);
+        var spawnY = Mathf.FloorToInt(SpawnPosition.y * Chunks.z * ChunkSize.z + ChunkSize.z / 2);
+
+        var spawnPos = new Vector3(
+            spawnX,
+            0.0f,
+            spawnY
+            );
+
+        spawnPos += new Vector3(0.5f, 2f, 0.5f);
+
+        var player = (GameObject) Instantiate(PlayerPrefab, spawnPos, Quaternion.identity);
+        var chunkLoader = player.GetComponent<ChunkLoader>();
 
         // Setup Generators
         foreach (var generator in Generators)
         {
             generator.Setup();
         }
-
+        
         // Generate world
-        for (var x = 0; x < (int)Chunks.x; x++)
+        foreach (var loc in chunkLoader.GetLoadedChunks())
         {
-            for (var y = 0; y < (int) Chunks.y; y++)
-            {
-                for (var z = 0; z < (int)Chunks.z; z++)
-                {
-                    var chunk = m_chunks[x, y, z] = CreateChunk(x, y, z);
-                    chunk.GenerateChunk();
-                }
-            }
+            var chunk = CreateChunk(loc);
+            m_chunks.Add(loc, chunk);
+            chunk.Loaded = true;
+            chunk.GenerateChunk();
         }
 
         yield return new WaitForFixedUpdate();
 
         // Build the world render mesh
-        for (var x = 0; x < (int)Chunks.x; x++)
+        var chunks = new List<Chunk>(m_chunks.Values);
+        foreach (var chunk in chunks)
         {
-            for (var y = 0; y < (int)Chunks.y; y++)
-            {
-                for (var z = 0; z < (int)Chunks.z; z++)
-                {
-                    m_chunks[x, y, z].BuildMesh();
-                }
-            }
+            chunk.BuildMesh();
         }
 
         yield return new WaitForFixedUpdate();
 
-        var spawnX = Mathf.FloorToInt(SpawnPosition.x * Chunks.x * ChunkSize.x + ChunkSize.x / 2);
-        var spawnY = Mathf.FloorToInt(SpawnPosition.y * Chunks.z * ChunkSize.z + ChunkSize.z / 2);
-        
-        var spawnPos = new Vector3(
+        spawnPos = new Vector3(
             spawnX,
             GetGroundLevel(spawnX, spawnY),
             spawnY
             );
 
         spawnPos += new Vector3(0.5f, 2f, 0.5f);
-        Instantiate(PlayerPrefab, spawnPos, Quaternion.identity);
+        player.transform.position = spawnPos;
+        player.GetComponent<PlayerCameraController>().EnableCamera();
 
         m_running = true;
 
@@ -114,42 +120,44 @@ public class World : MonoBehaviour
         StartCoroutine(ChunkUpdate());
     }
 
-    private Chunk CreateChunk(int x, int y, int z)
+    private Chunk CreateChunk(Chunk.ChunkLocation loc)
     {
-        var chunkObject = new GameObject("Chunk_" + x + "_" + y + "_" + z);
+        var chunkObject = new GameObject("Chunk_" + loc.X + "_" + loc.Y + "_" + loc.Z);
         //chunkObject.SetActive(false);
         chunkObject.AddComponent(typeof (Chunk));
         chunkObject.transform.parent = transform;
         
-        chunkObject.transform.position = new Vector3(x * ChunkSize.x, y * ChunkSize.y, z * ChunkSize.y);
+        chunkObject.transform.position = new Vector3(loc.X * ChunkSize.x, loc.Y * ChunkSize.y, loc.Z * ChunkSize.y);
 
         var meshRenderer = chunkObject.GetComponent<MeshRenderer>();
         meshRenderer.materials = GroundMaterials;
 
         var chunk = chunkObject.GetComponent<Chunk>();
-        chunk.WorldGenerator = Generators[y];
+        chunk.WorldGenerator = Generators[loc.Y];
         chunk.OptimiseMesh = OptimiseMesh;
         chunk.ChunkSize = ChunkSize;
         chunk.World = this;
-        chunk.Location = new Chunk.ChunkLocation {X = x, Y = y, Z = z};
+        chunk.Location = new Chunk.ChunkLocation {X = loc.X, Y = loc.Y, Z = loc.Z };
         
         return chunk;
     }
 
     public void BuildChunks(bool force = false)
     {
-        for (var x = 0; x < (int)Chunks.x; x++)
+        var chunks = new List<Chunk>(m_chunks.Values);
+        foreach (var chunk in chunks.Where(chunk => chunk.Loaded && (force || chunk.IsDirty())))
         {
-            for (var y = 0; y < (int)Chunks.y; y++)
-            {
-                for (var z = 0; z < (int)Chunks.z; z++)
-                {
-                    if (force || m_chunks[x, y, z].IsDirty())
-                    {
-                        m_chunks[x, y, z].BuildMesh();
-                    }
-                }
-            }
+            chunk.BuildMesh();
+        }
+    }
+
+    private void CleanupChunks()
+    {
+        var chunks = new List<Chunk>(m_chunks.Values);
+        foreach (var chunk in chunks.Where(chunk => !chunk.Loaded))
+        {
+            m_chunks.Remove(chunk.Location);
+            Destroy(chunk.gameObject);
         }
     }
 
@@ -157,9 +165,10 @@ public class World : MonoBehaviour
     {
         while (m_running)
         {
-            BuildChunks();
-
             yield return new WaitForSeconds(1);
+
+            CleanupChunks();
+            BuildChunks();
         }
     }
 
@@ -168,15 +177,50 @@ public class World : MonoBehaviour
         m_running = false;
     }
 
-    public Chunk GetChunk(BlockPos pos)
+    public Chunk GetChunk(BlockPos pos, bool createChunk = true)
     {
-        // TODO remove when we get infinite world gen
         if (!IsValid(pos))
         {
-            throw new ArgumentException(string.Format("Invalid coordinate {0}", pos));
+            throw new ArgumentException(string.Format("Invalid block position {0}", pos));
         }
-        
-        return m_chunks[(int) (pos.X / ChunkSize.x), (int)(pos.Y / ChunkSize.y), (int)(pos.Z / ChunkSize.z)];
+
+        return GetChunk(GetChunkLocation(pos));
+    }
+
+    public Chunk GetChunk(Chunk.ChunkLocation pos, bool createChunk = true)
+    {
+        if (!IsValid(pos))
+        {
+            throw new ArgumentException(string.Format("Invalid chunk position {0}", pos));
+        }
+
+        if (!m_chunks.ContainsKey(pos))
+        {
+            if (!createChunk)
+                return null;
+
+            var chunk = CreateChunk(pos);
+            m_chunks.Add(pos, chunk);
+            chunk.GenerateChunk();
+            chunk.Loaded = false;
+        }
+
+        return m_chunks[pos];
+    }
+
+    public Chunk.ChunkLocation GetChunkLocation(BlockPos pos)
+    {
+        if (!IsValid(pos))
+        {
+            throw new ArgumentException(string.Format("Invalid block position {0}", pos));
+        }
+
+        return new Chunk.ChunkLocation
+        {
+            X = Mathf.FloorToInt(pos.X/ChunkSize.x),
+            Y = Mathf.FloorToInt(pos.Y/ChunkSize.y),
+            Z = Mathf.FloorToInt(pos.Z/ChunkSize.z)
+        };
     }
 
     public int GetGroundLevel(int x, int z)
@@ -194,18 +238,28 @@ public class World : MonoBehaviour
         return -1;
     }
 
-    public BlockState GetBlock(BlockPos pos)
+    public BlockState GetBlock(BlockPos pos, bool createChunk = true)
     {
-        return GetChunk(pos).GetBlock(pos);
+        return GetChunk(pos, createChunk).GetBlock(pos);
     }
 
-    public void SetBlock(BlockPos pos, BlockType block)
+    public void SetBlock(BlockPos pos, BlockType block, bool createChunk = true)
     {
-        GetChunk(pos).SetBlock(pos, block);
+        GetChunk(pos, createChunk).SetBlock(pos, block);
     }
 
     public bool IsValid(BlockPos pos)
     {
-        return !(pos.X < 0 || pos.X > Chunks.x*ChunkSize.x - 1 || pos.Y < 0 || pos.Y > Chunks.y*ChunkSize.y - 1 || pos.Z < 0 || pos.Z > Chunks.z*ChunkSize.z - 1);
+        if (ReferenceEquals(pos, null))
+        {
+            return false;
+        }
+
+        return pos.Y >= 0 && pos.Y <= (ChunkSize.y * Chunks.y) - 1;
+    }
+
+    public bool IsValid(Chunk.ChunkLocation pos)
+    {
+        return pos.Y >= 0 && pos.Y <= (Chunks.y - 1);
     }
 }

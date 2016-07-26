@@ -25,6 +25,8 @@ GameObject:
   - 54: {fileID: 54000010685291790}
   - 114: {fileID: 114000011425085756}
   - 114: {fileID: 114000011259629344}
+  - 114: {fileID: 114000013112778084}
+  - 114: {fileID: 114000011393574130}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -55,7 +57,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &1000013784674186
 GameObject:
   m_ObjectHideFlags: 0
@@ -231,7 +233,7 @@ Rigidbody:
   m_Drag: 3
   m_AngularDrag: 0.05
   m_UseGravity: 1
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
@@ -276,6 +278,7 @@ MonoBehaviour:
     tonemapper: 0
     exposure: 1
     curve:
+      serializedVersion: 2
       m_Curve:
       - time: 0
         value: 0
@@ -300,21 +303,9 @@ MonoBehaviour:
     enabled: 1
     precision: 16
     colorWheels:
-      shadows:
-        r: 1
-        g: 0.8525732
-        b: 0.68343675
-        a: 1
-      midtones:
-        r: 0.5940654
-        g: 0.6125708
-        b: 1
-        a: 1
-      highlights:
-        r: 1
-        g: 0.8298994
-        b: 0.6219049
-        a: 1
+      shadows: {r: 1, g: 0.8525732, b: 0.68343675, a: 1}
+      midtones: {r: 0.5940654, g: 0.6125708, b: 1, a: 1}
+      highlights: {r: 1, g: 0.8298994, b: 0.6219049, a: 1}
     basics:
       temperatureShift: 0
       tint: 0
@@ -333,6 +324,7 @@ MonoBehaviour:
       - {x: 0, y: 0, z: 1}
     curves:
       master:
+        serializedVersion: 2
         m_Curve:
         - time: 0
           value: 0
@@ -348,6 +340,7 @@ MonoBehaviour:
         m_PostInfinity: 2
         m_RotationOrder: 0
       red:
+        serializedVersion: 2
         m_Curve:
         - time: 0
           value: 0
@@ -363,6 +356,7 @@ MonoBehaviour:
         m_PostInfinity: 2
         m_RotationOrder: 0
       green:
+        serializedVersion: 2
         m_Curve:
         - time: 0
           value: 0
@@ -378,6 +372,7 @@ MonoBehaviour:
         m_PostInfinity: 2
         m_RotationOrder: 0
       blue:
+        serializedVersion: 2
         m_Curve:
         - time: 0
           value: 0
@@ -420,11 +415,7 @@ MonoBehaviour:
     scale: 1
   vignette:
     enabled: 1
-    color:
-      r: 0
-      g: 0
-      b: 0
-      a: 1
+    color: {r: 0, g: 0, b: 0, a: 1}
     center: {x: 0.5, y: 0.5}
     intensity: 0.5
     smoothness: 3
@@ -433,11 +424,7 @@ MonoBehaviour:
     desaturate: 0
   chromaticAberration:
     enabled: 1
-    color:
-      r: 0
-      g: 1
-      b: 0
-      a: 1
+    color: {r: 0, g: 1, b: 0, a: 1}
     amount: 0
   m_Shader: {fileID: 4800000, guid: 136ab50fe2b9ad64d9c22adc3668abb7, type: 3}
 --- !u!114 &114000011259629344
@@ -454,6 +441,18 @@ MonoBehaviour:
   Reach: 10
   Camera: {fileID: 20000012320574986}
   HighlightTransform: {fileID: 4000010962886614}
+--- !u!114 &114000011393574130
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1000010513843120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e4d43903b6377c41ad1e4a175002e9e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  LoadDistance: 2
 --- !u!114 &114000011425085756
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -522,6 +521,18 @@ MonoBehaviour:
     debug: 0
   _aoShader: {fileID: 4800000, guid: 65e203e5acda447acbf9dc1ef78c4a39, type: 3}
   _quadMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 3}
+--- !u!114 &114000013112778084
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1000010513843120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73a59363e8e46e1458d60dd8e0468aa8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Camera: {fileID: 20000012320574986}
 --- !u!114 &114000013891251514
 MonoBehaviour:
   m_ObjectHideFlags: 1
