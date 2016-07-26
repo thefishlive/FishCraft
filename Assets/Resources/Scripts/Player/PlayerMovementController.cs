@@ -45,7 +45,11 @@ public class PlayerMovementController : MonoBehaviour
     /// The world this player is in
     /// </summary>
     private World m_world;
-    
+    /// <summary>
+    /// The chunks that were loaded last frame
+    /// </summary>
+    private List<Chunk.ChunkLocation> m_loadedChunks = new List<Chunk.ChunkLocation>();
+
     // Use this for initialization
     private void Start()
     {
@@ -97,12 +101,19 @@ public class PlayerMovementController : MonoBehaviour
 
         m_rigidbody.AddForce(movement, ForceMode.Impulse);
 
-//        UpdateLoadedChunks();
+        UpdateLoadedChunks();
     }
 
     private void UpdateLoadedChunks()
     {
         var chunks = m_chunkLoader.GetLoadedChunks();
+
+        foreach (var chunk in m_loadedChunks.Select(loc => m_world.GetChunk(loc)))
+        {
+            chunk.Loaded = false;
+        }
+
+        m_loadedChunks = chunks;
 
         foreach (var chunk in chunks.Select(loc => m_world.GetChunk(loc)))
         {
