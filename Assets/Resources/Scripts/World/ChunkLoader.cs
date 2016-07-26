@@ -3,5 +3,5 @@ using UnityEngine;
 
 public abstract class ChunkLoader : MonoBehaviour
 {
-    public abstract List<Chunk.ChunkLocation> GetLoadedChunks();
+    public abstract List<ChunkLocation> GetLoadedChunks();
 }

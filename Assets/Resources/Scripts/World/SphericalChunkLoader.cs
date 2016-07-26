@@ -31,10 +31,17 @@ public class SphericalChunkLoader : ChunkLoader
 
     private World m_world;
     
-    public override List<Chunk.ChunkLocation> GetLoadedChunks()
+    public override List<ChunkLocation> GetLoadedChunks()
     {
-        var chunks = new List<Chunk.ChunkLocation>();
-        var loc = World.GetChunkLocation(new BlockPos(transform.position));
+        var chunks = new List<ChunkLocation>();
+        var pos = new BlockPos(transform.position);
+
+        if (!World.IsValid(pos))
+        {
+            return chunks;
+        }
+
+        var loc = World.GetChunkLocation(pos);
 
         float distanceSqr = LoadDistance*LoadDistance;
 
@@ -42,11 +49,12 @@ public class SphericalChunkLoader : ChunkLoader
         {
             for (var z = loc.Z - LoadDistance; z <= loc.Z + LoadDistance; z++)
             {
-                if (!((loc.X - x)*(loc.X - x) + (loc.Z - z)*(loc.Z - z) <= distanceSqr)) continue;
-
                 for (var y = 0; y < m_world.Chunks.y; y++)
                 {
-                    chunks.Add(new Chunk.ChunkLocation { X = x, Y = y, Z = z });
+                    if ((loc.X - x)*(loc.X - x) + (loc.Y - y)*(loc.Y - y) + (loc.Z - z)*(loc.Z - z) <= distanceSqr)
+                    {
+                        chunks.Add(new ChunkLocation(x, y, z));
+                    }
                 }
             }
         }

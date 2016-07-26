@@ -36,8 +36,13 @@ public class World : MonoBehaviour
     [Tooltip("Cull out invisible faces in the mesh")]
     public bool OptimiseMesh = true;
 
-    private Dictionary<Chunk.ChunkLocation,Chunk> m_chunks;
-
+    /// <summary>
+    /// All of the currently loaded chunks in this world
+    /// </summary>
+    private Dictionary<ChunkLocation, Chunk> m_chunks;
+    /// <summary>
+    /// If this world is currently updating
+    /// </summary>
     private bool m_running;
 
 	// Use this for initialization
@@ -56,7 +61,7 @@ public class World : MonoBehaviour
         var stopwatch = new Stopwatch();
         stopwatch.Start();
 #endif
-        m_chunks = new Dictionary<Chunk.ChunkLocation, Chunk>();
+        m_chunks = new Dictionary<ChunkLocation, Chunk>();
         yield return new WaitForFixedUpdate();
 
         var spawnX = Mathf.FloorToInt(SpawnPosition.x * Chunks.x * ChunkSize.x + ChunkSize.x / 2);
@@ -120,10 +125,9 @@ public class World : MonoBehaviour
         StartCoroutine(ChunkUpdate());
     }
 
-    private Chunk CreateChunk(Chunk.ChunkLocation loc)
+    private Chunk CreateChunk(ChunkLocation loc)
     {
         var chunkObject = new GameObject("Chunk_" + loc.X + "_" + loc.Y + "_" + loc.Z);
-        //chunkObject.SetActive(false);
         chunkObject.AddComponent(typeof (Chunk));
         chunkObject.transform.parent = transform;
         
@@ -137,7 +141,7 @@ public class World : MonoBehaviour
         chunk.OptimiseMesh = OptimiseMesh;
         chunk.ChunkSize = ChunkSize;
         chunk.World = this;
-        chunk.Location = new Chunk.ChunkLocation {X = loc.X, Y = loc.Y, Z = loc.Z };
+        chunk.Location = loc;
         
         return chunk;
     }
@@ -187,7 +191,7 @@ public class World : MonoBehaviour
         return GetChunk(GetChunkLocation(pos));
     }
 
-    public Chunk GetChunk(Chunk.ChunkLocation pos, bool createChunk = true)
+    public Chunk GetChunk(ChunkLocation pos, bool createChunk = true)
     {
         if (!IsValid(pos))
         {
@@ -208,19 +212,19 @@ public class World : MonoBehaviour
         return m_chunks[pos];
     }
 
-    public Chunk.ChunkLocation GetChunkLocation(BlockPos pos)
+    public ChunkLocation GetChunkLocation(BlockPos pos)
     {
         if (!IsValid(pos))
         {
             throw new ArgumentException(string.Format("Invalid block position {0}", pos));
         }
 
-        return new Chunk.ChunkLocation
-        {
-            X = Mathf.FloorToInt(pos.X/ChunkSize.x),
-            Y = Mathf.FloorToInt(pos.Y/ChunkSize.y),
-            Z = Mathf.FloorToInt(pos.Z/ChunkSize.z)
-        };
+        return new ChunkLocation
+        (
+            Mathf.FloorToInt(pos.X/ChunkSize.x),
+            Mathf.FloorToInt(pos.Y/ChunkSize.y),
+            Mathf.FloorToInt(pos.Z/ChunkSize.z)
+        );
     }
 
     public int GetGroundLevel(int x, int z)
@@ -258,7 +262,7 @@ public class World : MonoBehaviour
         return pos.Y >= 0 && pos.Y <= (ChunkSize.y * Chunks.y) - 1;
     }
 
-    public bool IsValid(Chunk.ChunkLocation pos)
+    public bool IsValid(ChunkLocation pos)
     {
         return pos.Y >= 0 && pos.Y <= (Chunks.y - 1);
     }

@@ -9,13 +9,6 @@ public class Chunk : MonoBehaviour
 {
     public const int BlockAir = 0;
     
-    public struct ChunkLocation
-    {
-        public int X { get; set; }
-        public int Y { get; set; }
-        public int Z { get; set; }
-    }
-    
     public World World { get; set; }
     public ChunkLocation Location { get; set; }
     public bool Loaded { get; set; }

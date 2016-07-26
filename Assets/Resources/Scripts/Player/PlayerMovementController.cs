@@ -48,7 +48,7 @@ public class PlayerMovementController : MonoBehaviour
     /// <summary>
     /// The chunks that were loaded last frame
     /// </summary>
-    private List<Chunk.ChunkLocation> m_loadedChunks = new List<Chunk.ChunkLocation>();
+    private List<ChunkLocation> m_loadedChunks = new List<ChunkLocation>();
 
     // Use this for initialization
     private void Start()
@@ -87,6 +87,12 @@ public class PlayerMovementController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (transform.position.y <= 0)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         HandleLook();
 
         HandleMovement();
